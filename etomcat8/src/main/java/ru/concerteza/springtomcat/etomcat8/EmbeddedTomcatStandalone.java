@@ -64,12 +64,18 @@ public class EmbeddedTomcatStandalone {
         StandardEngine engine = createEngine(service);
         Host host = createHost(paths);
         StandardContext context = createContext(paths);
-        Connector connector = createConnector(paths);
         // tomcat binding
         service.setContainer(engine);
         engine.setDefaultHost(host.getName());
         engine.addChild(host);
         host.addChild(context);
+        if (generalProps.getHttpPort() > 0) {
+            Connector connector = createConnector(paths, generalProps.getHttpPort(), false);
+            Http11NioProtocol proto = (Http11NioProtocol) connector.getProtocolHandler();
+            proto.setExecutor(executor);
+            service.addConnector(connector);
+        }
+        Connector connector = createConnector(paths, generalProps.getPort(), sslProps.isSslEnabled());
         Http11NioProtocol proto = (Http11NioProtocol) connector.getProtocolHandler();
         proto.setExecutor(executor);
         service.addConnector(connector);
@@ -181,7 +187,7 @@ public class EmbeddedTomcatStandalone {
         return manager;
     }
 
-    private Connector createConnector(Paths paths) {
+    private Connector createConnector(Paths paths, int port, boolean ssl) {
         Connector con = null;
         try {
             if(connectorProps.isUseFailFastResponseWriter()) {
@@ -204,7 +210,7 @@ public class EmbeddedTomcatStandalone {
         proto.setDisableUploadTimeout(connectorProps.isDisableUploadTimeout());
         proto.setMaxHttpHeaderSize(connectorProps.getMaxHttpHeaderSizeBytes());
         proto.setMaxKeepAliveRequests(connectorProps.getMaxKeepAliveRequests());
-        con.setPort(generalProps.getPort());
+        con.setPort(port);
         proto.setServer(connectorProps.getServer());
         proto.setSocketBuffer(connectorProps.getSocketBufferBytes());
 
@@ -244,7 +250,7 @@ public class EmbeddedTomcatStandalone {
         con.setProperty("selectorPool.maxSelectors", Integer.toString(nioProps.getMaxSelectors()));
         con.setProperty("selectorPool.maxSpareSelectors", Integer.toString(nioProps.getMaxSpareSelectors()));
 
-        if(sslProps.isSslEnabled()) {
+        if(ssl) {
             proto.setSSLEnabled(true);
             con.setScheme("https");
             con.setSecure(true);

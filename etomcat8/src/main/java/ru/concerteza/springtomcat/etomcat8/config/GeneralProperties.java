@@ -8,6 +8,7 @@ package ru.concerteza.springtomcat.etomcat8.config;
 public class GeneralProperties {
 
     private int port = 8080;
+    private int httpPort = -1;
     private String docBaseDir = "";
     private String contextPath = "";
 
@@ -17,6 +18,13 @@ public class GeneralProperties {
 
     public GeneralProperties setPort(int port) {
         this.port = port;
+        return this;
+    }
+
+    public int getHttpPort() { return httpPort; }
+
+    public GeneralProperties setHttpPort(int httpPort) {
+        this.httpPort = httpPort;
         return this;
     }
 
